@@ -65,11 +65,8 @@ namespace WindowsBiometricaService
             InitializeComponent();
         }
 
-        [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.ControlAppDomain)]
         protected override void OnStart(string[] args)
         {
-            AppDomain currentDomain = AppDomain.CurrentDomain;
-            currentDomain.UnhandledException += MyHandler;
             try
             {
                 File.AppendAllText(@"C:\logger.log", "---------------------------------------------------------------------------- " + DateTime.Now + Environment.NewLine);
@@ -89,12 +86,6 @@ namespace WindowsBiometricaService
             timer1.Dispose();
             timer2.Dispose();
             timer3.Dispose();
-        }
-
-        void MyHandler(object sender, UnhandledExceptionEventArgs args)
-        {
-            var e = (Exception)args.ExceptionObject;
-            File.AppendAllText(@"C:\logger.log", DateTime.Now + "  ERROR Gral de Servicio: " + e.Message + Environment.NewLine + e.StackTrace);
         }
 
         private void RegistroPrincipal(Object state)
