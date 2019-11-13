@@ -49,6 +49,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Modelos\Dispositivo.cs" />
+    <Compile Include="Modelos\Huella.cs" />
+    <Compile Include="Modelos\Usuario.cs" />
     <Compile Include="ProjectInstaller.cs">
       <SubType>Component</SubType>
     </Compile>

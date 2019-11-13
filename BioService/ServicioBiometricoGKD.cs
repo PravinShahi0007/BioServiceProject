@@ -10,6 +10,7 @@ using System.IO;
 using System.Threading;
 using System.Security.Permissions;
 using System.Threading.Tasks;
+using BioService.Modelos;
 
 namespace WindowsBiometricaService
 {
@@ -22,34 +23,35 @@ namespace WindowsBiometricaService
         Boolean Conectado;
         int idMaquina;
         private String direccion = "http://35.185.115.130/api/";
+        //private String direccion = "http://34.95.203.7/api/";
         private ListaDispositivos dispositivosList = new ListaDispositivos();
 
-        public class Huella
-        {
-            public int id { get; set; }
-            public string codigo { get; set; }
-            public int user_id { get; set; }
-            public string created_at { get; set; }
-            public string updated_at { get; set; }
-            public object deleted_at { get; set; }
-        }
-        public class User
-        {
-            public string nombre { get; set; }
-            public int credencial { get; set; }
-            public List<Huella> huellas { get; set; }
-            public string tag { get; set; }
-        }
-        public class Dispositivo
-        {
-            public int id { get; set; }
-            public string name { get; set; }
-            public string ip { get; set; }
-            public string puerto { get; set; }
-            public string created_at { get; set; }
-            public string updated_at { get; set; }
-            public object deleted_at { get; set; }
-        }
+        //public class Huella
+        //{
+        //    public int id { get; set; }
+        //    public string codigo { get; set; }
+        //    public int user_id { get; set; }
+        //    public string created_at { get; set; }
+        //    public string updated_at { get; set; }
+        //    public object deleted_at { get; set; }
+        //}
+        //public class Usuario
+        //{
+        //    public string nombre { get; set; }
+        //    public int credencial { get; set; }
+        //    public List<Huella> huellas { get; set; }
+        //    public string tag { get; set; }
+        //}
+        //public class Dispositivo
+        //{
+        //    public int id { get; set; }
+        //    public string name { get; set; }
+        //    public string ip { get; set; }
+        //    public string puerto { get; set; }
+        //    public string created_at { get; set; }
+        //    public string updated_at { get; set; }
+        //    public object deleted_at { get; set; }
+        //}
         public class ListaDispositivos
         {
             public bool success { get; set; }
@@ -69,11 +71,14 @@ namespace WindowsBiometricaService
         {
             try
             {
-                File.AppendAllText(@"C:\logger.log", "---------------------------------------------------------------------------- " + DateTime.Now + Environment.NewLine);
                 datosCapturados = false;
-                timer1 = new Timer(RegistroPrincipal, null, 2000, Timeout.Infinite); //20"
-                timer3 = new Timer(EnviarData, null, 480000, 480000); //8' -repite cada 8' si es que no se envian las asistencias
-                timer2 = new Timer(CheckNewUser, null, 600000, Timeout.Infinite); //10'
+                timer1 = new Timer(RegistroPrincipal, null, Timeout.Infinite, Timeout.Infinite); 
+                timer3 = new Timer(EnviarData, null, Timeout.Infinite, Timeout.Infinite); 
+                timer2 = new Timer(CheckNewUser, null, Timeout.Infinite, Timeout.Infinite); 
+
+                timer1.Change(2000, Timeout.Infinite); //20"
+                timer3.Change(480000, 480000); //8' -repite cada 8' si es que no se envian las asistencias
+                timer2.Change(600000, Timeout.Infinite); //10'
             }
             catch (Exception e)
             {
@@ -94,6 +99,7 @@ namespace WindowsBiometricaService
             {
                 //Finalizo el timer una vez ejecutado
                 timer1.Change(Timeout.Infinite, Timeout.Infinite);
+                File.AppendAllText(@"C:\logger.log", Environment.NewLine + "---------------------------------------------------------------------------- " + DateTime.Now + Environment.NewLine);
                 File.AppendAllText(@"C:\logger.log", "(REGISTRO PRINCIPAL)" + Environment.NewLine);
                 //Traigo los dispositivos del server
                 var httpWebRequestGet = (HttpWebRequest)WebRequest.Create(direccion + "dispositivos");
@@ -137,7 +143,7 @@ namespace WindowsBiometricaService
             Conectado = dispositivo.Connect_Net(ip, Convert.ToInt32(puerto));
             if (Conectado)  //Pruebo conexion con el dispositivo y continuo si se conecta
             {
-                File.AppendAllText(@"C:\logger.log", "---------------INICIO OK---------------- " + DateTime.Now + Environment.NewLine);
+                File.AppendAllText(@"C:\logger.log", "---------------CONECTADO---------------- " + DateTime.Now + Environment.NewLine);
 
                 dispositivo.EnableDevice(1, false); //deshabilito el dispositivo momentaneamente hasta que se completen las operaciones
                                                     //asigno nuevo id de maquina
@@ -232,11 +238,11 @@ namespace WindowsBiometricaService
         private void CrearUsers(HttpWebResponse respuestaHTTP, int privilegio)
         {
             File.AppendAllText(@"C:\logger.log", "Inicio envio de huellas..." + DateTime.Now + Environment.NewLine);
-            var userList = new List<User>();
+            var userList = new List<Usuario>();
             using (var streamReader = new StreamReader(respuestaHTTP.GetResponseStream()))
             {
                 var json = streamReader.ReadToEnd();
-                userList = JsonConvert.DeserializeObject<List<User>>(json); //Convierto el json contenedor de los usuarios a una List<User>, con "User" objeto definido en la clase
+                userList = JsonConvert.DeserializeObject<List<Usuario>>(json); //Convierto el json contenedor de los usuarios a una List<User>, con "User" objeto definido en la clase
             }
             //Comienzo el grabado de datos
             bool batchUpdate = dispositivo.BeginBatchUpdate(idMaquina, 1);
@@ -282,7 +288,7 @@ namespace WindowsBiometricaService
                 using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
                 {
                     var json = streamReader.ReadToEnd();
-                    var userList = JsonConvert.DeserializeObject<List<User>>(json);
+                    var userList = JsonConvert.DeserializeObject<List<Usuario>>(json);
                     if (userList.Count > 0)
                     {
                         File.AppendAllText(@"C:\logger.log", "Capturado - " + DateTime.Now + Environment.NewLine);
