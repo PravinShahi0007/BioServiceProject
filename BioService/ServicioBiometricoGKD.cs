@@ -11,52 +11,26 @@ using System.Threading;
 using System.Security.Permissions;
 using System.Threading.Tasks;
 using BioService.Modelos;
+using BioService.Controladores;
 
 namespace WindowsBiometricaService
 {
     public partial class ServicioBiometricoGKD : ServiceBase
     {
-        CZKEMClass dispositivo = new CZKEMClass(); 
+        CZKEMClass terminalZK = new CZKEMClass(); 
         Timer timer1;
         Timer timer2;
         Timer timer3;
         Boolean Conectado;
         int idMaquina;
-        private String direccion = "http://35.185.115.130/api/";
-        //private String direccion = "http://34.95.203.7/api/";
-        private ListaDispositivos dispositivosList = new ListaDispositivos();
+        private String direccion = "http://34.95.241.213/api/";
+        List<Dispositivo> listaDispositivos = new List<Dispositivo>();
+        List<Usuario> listaUsuarios = new List<Usuario>();
+        List<Usuario> listaUsuariosStaff = new List<Usuario>();
 
-        //public class Huella
-        //{
-        //    public int id { get; set; }
-        //    public string codigo { get; set; }
-        //    public int user_id { get; set; }
-        //    public string created_at { get; set; }
-        //    public string updated_at { get; set; }
-        //    public object deleted_at { get; set; }
-        //}
-        //public class Usuario
-        //{
-        //    public string nombre { get; set; }
-        //    public int credencial { get; set; }
-        //    public List<Huella> huellas { get; set; }
-        //    public string tag { get; set; }
-        //}
-        //public class Dispositivo
-        //{
-        //    public int id { get; set; }
-        //    public string name { get; set; }
-        //    public string ip { get; set; }
-        //    public string puerto { get; set; }
-        //    public string created_at { get; set; }
-        //    public string updated_at { get; set; }
-        //    public object deleted_at { get; set; }
-        //}
-        public class ListaDispositivos
+        public class UsuariosIngresados
         {
-            public bool success { get; set; }
-            public List<Dispositivo> data { get; set; }
-            public string message { get; set; }
+            public int ingresados { get; set; }
         }
 
         DataTable dt;
@@ -72,7 +46,7 @@ namespace WindowsBiometricaService
             try
             {
                 datosCapturados = false;
-                timer1 = new Timer(RegistroPrincipal, null, Timeout.Infinite, Timeout.Infinite); 
+                timer1 = new Timer(Inicio, null, Timeout.Infinite, Timeout.Infinite); 
                 timer3 = new Timer(EnviarData, null, Timeout.Infinite, Timeout.Infinite); 
                 timer2 = new Timer(CheckNewUser, null, Timeout.Infinite, Timeout.Infinite); 
 
@@ -93,28 +67,20 @@ namespace WindowsBiometricaService
             timer3.Dispose();
         }
 
-        private void RegistroPrincipal(Object state)
+        private void Inicio(Object state)
         {
             try
             {
                 //Finalizo el timer una vez ejecutado
                 timer1.Change(Timeout.Infinite, Timeout.Infinite);
                 File.AppendAllText(@"C:\logger.log", Environment.NewLine + "---------------------------------------------------------------------------- " + DateTime.Now + Environment.NewLine);
-                File.AppendAllText(@"C:\logger.log", "(REGISTRO PRINCIPAL)" + Environment.NewLine);
+                File.AppendAllText(@"C:\logger.log", "(INICIO)" + Environment.NewLine);
                 //Traigo los dispositivos del server
-                var httpWebRequestGet = (HttpWebRequest)WebRequest.Create(direccion + "dispositivos");
-                httpWebRequestGet.ContentType = "application/json";
-                httpWebRequestGet.Method = "GET";
-                var httpResponse = (HttpWebResponse)httpWebRequestGet.GetResponse();
-                using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-                {
-                    var json = streamReader.ReadToEnd();
-                    dispositivosList = JsonConvert.DeserializeObject<ListaDispositivos>(json);
-                }
+                listaDispositivos = DispositivoController.Lista();
                 //Conecto con cada dispositivo y gestiono los datos
-                foreach (var disp in dispositivosList.data)
+                foreach (var d in listaDispositivos)
                 {
-                    Conectar(disp.ip, disp.puerto, disp.id);
+                    Conectar(d);
                 }
             }
             catch (WebException ex)
@@ -137,61 +103,25 @@ namespace WindowsBiometricaService
             }
         }
 
-        private void Conectar(string ip, string puerto, int idDisp)
+        private void Conectar(Dispositivo disp)
         {
             File.AppendAllText(@"C:\logger.log", "Conectando... " + DateTime.Now + Environment.NewLine);
-            Conectado = dispositivo.Connect_Net(ip, Convert.ToInt32(puerto));
-            if (Conectado)  //Pruebo conexion con el dispositivo y continuo si se conecta
+            //Intento conectarme al terminal de zk por tcp
+            if (!Conectado)
+                Conectado = terminalZK.Connect_Net(disp.ip, Convert.ToInt32(disp.puerto));
+            if (Conectado)
             {
                 File.AppendAllText(@"C:\logger.log", "---------------CONECTADO---------------- " + DateTime.Now + Environment.NewLine);
-
-                dispositivo.EnableDevice(1, false); //deshabilito el dispositivo momentaneamente hasta que se completen las operaciones
-                                                    //asigno nuevo id de maquina
-                idMaquina = idDisp;
-                if (!datosCapturados)
-                {
-                    //datos para el backup de asistencias
-                    string sdwEnrollNumber = ""; //nro credencial(id del cliente)
-                    int idwVerifyMode = 0;
-                    int idwInOutMode = 0;
-                    int idwYear = 0;
-                    int idwMonth = 0;
-                    int idwDay = 0;
-                    int idwHour = 0;
-                    int idwMinute = 0;
-                    int idwSecond = 0;
-                    int idwWorkcode = 0;
-                    //Creo una tabla para ir grabando los datos del log de asistencias, solo necesito el id de cliente y la fecha y hora de acceso
-                    dt = new DataTable();
-                    dt.Columns.Add("credencial", typeof(String));
-                    dt.Columns.Add("horario", typeof(String));
-                    dt.Columns.Add("id", typeof(String));
-                    if (dispositivo.ReadGeneralLogData(idMaquina)) //Leo el log de datos con el numero de dispositivo = 1, si lo logra continua
-                    {
-                        //Recorro la lista de datos del log y grabo cada registro en la tabla "dt"
-                        while (dispositivo.SSR_GetGeneralLogData(idMaquina, out sdwEnrollNumber, out idwVerifyMode,
-                                    out idwInOutMode, out idwYear, out idwMonth, out idwDay, out idwHour, out idwMinute, out idwSecond, ref idwWorkcode))//get records from the memory
-                        {
-                            DataRow dr = dt.NewRow();
-                            dr["credencial"] = sdwEnrollNumber;
-                            dr["horario"] = idwYear + "-" + idwMonth + "-" + idwDay + " " + idwHour + ":" + idwMinute + ":" + idwSecond;
-                            dr["id"] = idDisp;
-                            dt.Rows.Add(dr);
-                        }
-                        datosCapturados = true;
-                        try
-                        {
-                            EnviarData(null);
-                        }
-                        catch (Exception)
-                        {
-                            File.AppendAllText(@"C:\logger.log", DateTime.Now + " ERROR envio de asistencias" + Environment.NewLine);
-                            timer3.Change(480000, Timeout.Infinite);
-                        }
-                    }
-                }
-                GestionarUsuarios(idDisp); //Mando los usuarios al dispositivo
-                dispositivo.EnableDevice(idMaquina, true); //Activo el dispositivo
+                //asigno nuevo id de maquina
+                idMaquina = disp.id;
+                //Traigo los usuarios staff y comunes(clientes) con sus huellas del server
+                listaUsuariosStaff = UsuarioController.Lista("staff");
+                listaUsuarios = UsuarioController.Lista($"dispositivos/id/{idMaquina}");
+                //deshabilito el terminal momentaneamente hasta que se completen las operaciones
+                terminalZK.EnableDevice(idMaquina, false);
+                GestionarAsistencias();
+                GestionarUsuarios();
+                terminalZK.EnableDevice(idMaquina, true); //Habilito el dispositivo
             }
             else
             {
@@ -200,7 +130,53 @@ namespace WindowsBiometricaService
             }
         }
 
-        private void GestionarUsuarios(int idD)
+        private void GestionarAsistencias()
+        {
+            if (!datosCapturados)
+            {
+                //datos para el backup de asistencias
+                string enrollNumber = ""; //nro credencial(id del cliente)
+                int verifyMode = 0;
+                int inOutMode = 0;
+                int year = 0;
+                int month = 0;
+                int day = 0;
+                int hour = 0;
+                int minute = 0;
+                int second = 0;
+                int workcode = 0;
+                //Creo una tabla para ir grabando los datos del log de asistencias, solo necesito el id de cliente y la fecha y hora de acceso
+                dt = new DataTable();
+                dt.Columns.Add("credencial", typeof(String));
+                dt.Columns.Add("horario", typeof(String));
+                dt.Columns.Add("id", typeof(String));
+                //Leo el log de datos con el numero de dispositivo (idMaquina), si lo logra continua
+                if (terminalZK.ReadGeneralLogData(idMaquina))
+                {
+                    //Recorro la lista de datos del log y grabo cada registro en la tabla "dt"
+                    while (terminalZK.SSR_GetGeneralLogData(idMaquina, out enrollNumber, out verifyMode, out inOutMode, out year, out month, out day, out hour, out minute, out second, ref workcode))//get records from the memory
+                    {
+                        DataRow dr = dt.NewRow();
+                        dr["credencial"] = enrollNumber;
+                        dr["horario"] = year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second;
+                        dr["id"] = idMaquina;
+                        dt.Rows.Add(dr);
+                    }
+                    datosCapturados = true;
+                    try
+                    {
+                        EnviarData(null);
+                    }
+                    catch (Exception)
+                    {
+                        File.AppendAllText(@"C:\logger.log", DateTime.Now + " ERROR envio de asistencias" + Environment.NewLine);
+                        timer3.Change(480000, Timeout.Infinite);
+                    }
+                }
+            }
+        }
+
+        private void GestionarUsuarios()
         {
             try
             {
@@ -212,11 +188,12 @@ namespace WindowsBiometricaService
                 var responseStaff = (HttpWebResponse)consultaStaff.GetResponse();
                 CrearUsers(responseStaff, 3); //Creo los usuarios que son staff 0:Normal; 1:Enrolador; 2:Admin; 3:SuperAdmin;
                 //Genero otra request para hacer un GET de los datos de usuario a ser grabados en el dispositivo
-                var consultaGet = (HttpWebRequest)WebRequest.Create(direccion + "dispositivos/id/" + idD);
+                var consultaGet = (HttpWebRequest)WebRequest.Create(direccion + "dispositivos/id/" + idMaquina);
                 consultaGet.ContentType = "application/json";
                 consultaGet.Method = "GET";
                 var responseGET = (HttpWebResponse)consultaGet.GetResponse();
                 CrearUsers(responseGET, 0);
+                EnviarTotalUsuarios(idMaquina); //Recupero y envio el total de usuarios registrados en el aparato
             }
             catch (WebException ex)
             {
@@ -245,20 +222,20 @@ namespace WindowsBiometricaService
                 userList = JsonConvert.DeserializeObject<List<Usuario>>(json); //Convierto el json contenedor de los usuarios a una List<User>, con "User" objeto definido en la clase
             }
             //Comienzo el grabado de datos
-            bool batchUpdate = dispositivo.BeginBatchUpdate(idMaquina, 1);
+            bool batchUpdate = terminalZK.BeginBatchUpdate(idMaquina, 1);
             for (int i = 0; i < userList.Count; i++)
             {
                 //Registro las tarjetas(tags) por usuario
                 if (!string.IsNullOrEmpty(userList[i].tag))
-                    dispositivo.SetStrCardNumber(userList[i].tag);
+                    terminalZK.SetStrCardNumber(userList[i].tag);
                 //Primero debo registrar los datos del usuario
-                if (dispositivo.SSR_SetUserInfo(idMaquina, userList[i].credencial.ToString(), userList[i].nombre, string.Empty, privilegio, true))
+                if (terminalZK.SSR_SetUserInfo(idMaquina, userList[i].credencial.ToString(), userList[i].nombre, string.Empty, privilegio, true))
                 {
                     //Segundo grabo las huellas de cada usuario
                     if (userList[i].huellas != null)
                         foreach (var h in userList[i].huellas)
                         {
-                            dispositivo.SetUserTmpExStr(idMaquina, userList[i].credencial.ToString(), h.id, 0, h.codigo);
+                            terminalZK.SetUserTmpExStr(idMaquina, userList[i].credencial.ToString(), h.id, 0, h.codigo);
                         }
                 }
                 else
@@ -271,9 +248,9 @@ namespace WindowsBiometricaService
             //Envio los datos
             if (batchUpdate)
             {
-                dispositivo.BatchUpdate(idMaquina);
+                terminalZK.BatchUpdate(idMaquina);
             }
-            dispositivo.RefreshData(idMaquina); //Actualizo el dispositivo para que las huellas queden activas
+            terminalZK.RefreshData(idMaquina); //Actualizo el dispositivo para que las huellas queden activas
             File.AppendAllText(@"C:\logger.log", "Fin envio de huellas..." + DateTime.Now + Environment.NewLine);
         }
 
@@ -292,16 +269,16 @@ namespace WindowsBiometricaService
                     if (userList.Count > 0)
                     {
                         File.AppendAllText(@"C:\logger.log", "Capturado - " + DateTime.Now + Environment.NewLine);
-                        foreach (var disp in dispositivosList.data)
+                        foreach (var disp in listaDispositivos)
                         {
-                            if (dispositivo.Connect_Net(disp.ip, Convert.ToInt32(disp.puerto)))
+                            if (terminalZK.Connect_Net(disp.ip, Convert.ToInt32(disp.puerto)))
                             {
                                 File.AppendAllText(@"C:\logger.log", "Conectado - " + DateTime.Now + Environment.NewLine);
                                 bool batchUpdate = false;
-                                dispositivo.EnableDevice(idMaquina, false); //deshabilito el dispositivo momentaneamente hasta que se completen las operaciones
+                                terminalZK.EnableDevice(idMaquina, false); //deshabilito el dispositivo momentaneamente hasta que se completen las operaciones
                                 try
                                 {
-                                    batchUpdate = dispositivo.BeginBatchUpdate(idMaquina, 1);
+                                    batchUpdate = terminalZK.BeginBatchUpdate(idMaquina, 1);
                                 }
                                 catch (Exception e)
                                 {
@@ -311,15 +288,15 @@ namespace WindowsBiometricaService
                                 {
                                     //Registro las tarjetas(tags) por usuario
                                     if (!string.IsNullOrEmpty(userList[i].tag))
-                                        dispositivo.SetStrCardNumber(userList[i].tag);
+                                        terminalZK.SetStrCardNumber(userList[i].tag);
                                     //Primero debo registrar los datos del usuario
-                                    if (dispositivo.SSR_SetUserInfo(idMaquina, userList[i].credencial.ToString(), userList[i].nombre, string.Empty, 0, true))
+                                    if (terminalZK.SSR_SetUserInfo(idMaquina, userList[i].credencial.ToString(), userList[i].nombre, string.Empty, 0, true))
                                     {
                                         //Segundo grabo las huellas de cada usuario
                                         if (userList[i].huellas != null)
                                             foreach (var h in userList[i].huellas)
                                             {
-                                                dispositivo.SetUserTmpExStr(idMaquina, userList[i].credencial.ToString(), h.id, 0, h.codigo);
+                                                terminalZK.SetUserTmpExStr(idMaquina, userList[i].credencial.ToString(), h.id, 0, h.codigo);
                                                 //dispositivo.SSR_SetUserTmpStr(1, userList[i].credencial.ToString(), h.id, h.codigo);
                                             }
                                     }
@@ -329,10 +306,10 @@ namespace WindowsBiometricaService
                                 //Envio los datos
                                 if (batchUpdate)
                                 {
-                                    dispositivo.BatchUpdate(idMaquina);
+                                    terminalZK.BatchUpdate(idMaquina);
                                 }
-                                dispositivo.RefreshData(idMaquina); //Actualizo el dispositivo para que las huellas queden activas
-                                dispositivo.EnableDevice(idMaquina, true); //habilitar dispositivo
+                                terminalZK.RefreshData(idMaquina); //Actualizo el dispositivo para que las huellas queden activas
+                                terminalZK.EnableDevice(idMaquina, true); //habilitar dispositivo
                                 File.AppendAllText(@"C:\logger.log", "Habilitado - " + DateTime.Now + Environment.NewLine);
                             }
                         }
@@ -385,7 +362,7 @@ namespace WindowsBiometricaService
                         {
                             File.AppendAllText("AsistanceGral.txt", row[0] + "\t" + row[1] + "\t" + row[2] + Environment.NewLine);
                         }
-                        dispositivo.ClearKeeperData(idMaquina); //Borro todos los datos(usuarios y asistencias) del dispositivo
+                        terminalZK.ClearKeeperData(idMaquina); //Borro todos los datos(usuarios y asistencias) del dispositivo
                         File.AppendAllText(@"C:\logger.log", "Envio de asistencias OK   " + DateTime.Now + Environment.NewLine);
                         datosCapturados = false; //Reseteo por si falla algun otro metodo
                         timer3.Change(Timeout.Infinite, Timeout.Infinite);
@@ -407,6 +384,70 @@ namespace WindowsBiometricaService
                     timer3.Change(480000, Timeout.Infinite); //re intento a los 8 minutos
                 }
             }
+        }
+
+        private void EnviarTotalUsuarios(int idDispositivo)
+        {
+            try
+            {
+                string sEnrollNumber = "";
+                bool bEnabled = false;
+                string sName = "";
+                string sPassword = "";
+                int iPrivilege = 0;
+                terminalZK.EnableDevice(idMaquina, false);
+                terminalZK.ReadAllUserID(idMaquina);//read all the user information to the memory
+                var usuariosIng = new UsuariosIngresados { ingresados = 0 };
+                int totalStaff = 0;
+                while (terminalZK.SSR_GetAllUserInfo(idMaquina, out sEnrollNumber, out sName, out sPassword, out iPrivilege, out bEnabled))//get all the users' information from the memory
+                {
+                    usuariosIng.ingresados++;
+                    if (iPrivilege == 3)
+                        totalStaff++;
+                }
+                File.AppendAllText(@"C:\logger.log", "(EVIAR TOTAL USUARIOS)" + Environment.NewLine);
+                //Genero una request al servidor para hacer un POST de los datos recien guardados
+                var httpWebRequest = (HttpWebRequest)WebRequest.Create($"{direccion}dispositivos/{idDispositivo}/ingresados");
+                httpWebRequest.ContentType = "application/json";
+                httpWebRequest.Method = "POST";
+                //Envio los datos
+                var reqStream = httpWebRequest.GetRequestStream();
+                using (var streamWriter = new StreamWriter(reqStream))
+                {
+                    string json = JsonConvert.SerializeObject(usuariosIng); //Convierto los datos de la tabla "dt" a un JSON, descargar la libreria desde nuget (Newtonsoft.Json) y ponerla como referencia
+                    streamWriter.Write(json);
+                    streamWriter.Flush();
+                    streamWriter.Close();
+                }
+                var r = httpWebRequest.GetResponse();
+                if (((HttpWebResponse)r).StatusCode == HttpStatusCode.OK)
+                {
+                    File.AppendAllText(@"C:\logger.log", "Total de usuarios enviados = " + usuariosIng.ingresados + "  staff = " + totalStaff + " " + DateTime.Now + Environment.NewLine);
+
+                    using (Stream dataStream = r.GetResponseStream())
+                    {
+                        // Open the stream using a StreamReader for easy access.  
+                        StreamReader reader = new StreamReader(dataStream);
+                        // Read the content.  
+                        string responseFromServer = reader.ReadToEnd();
+                        // Display the content.  
+                        File.AppendAllText(@"C:\logger.log", "response = " + responseFromServer + "  " + DateTime.Now + Environment.NewLine);
+                    }
+                }
+            }
+            catch (WebException ex)
+            {
+                File.AppendAllText(@"C:\logger.log", DateTime.Now + "  ERROR de Red(enviar total usuarios): " + ex.Message + Environment.NewLine + ex.StackTrace + Environment.NewLine);
+            }
+            catch (ProtocolViolationException ex)
+            {
+                File.AppendAllText(@"C:\logger.log", DateTime.Now + "  ERROR de Red(enviar total usuarios): " + ex.Message + Environment.NewLine + ex.StackTrace + Environment.NewLine);
+            }
+            catch (Exception ex)
+            {
+                File.AppendAllText(@"C:\logger.log", DateTime.Now + " ERROR POST(enviar total usuarios):" + ex.Message + Environment.NewLine);
+            }
+
         }
     }
 }
