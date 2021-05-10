@@ -40,7 +40,13 @@ namespace WindowsBiometricaService
         {
             InitializeComponent();
         }
-
+        //Metodo para ejecutar servicio como console app
+        internal void TestStartupAndStop(string[] args)
+        {
+            this.OnStart(args);
+            Console.ReadLine();
+            this.OnStop();
+        }
         protected override void OnStart(string[] args)
         {
             try
