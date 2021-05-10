@@ -23,7 +23,7 @@ namespace WindowsBiometricaService
         Timer timer3;
         Boolean Conectado;
         int idMaquina;
-        private String direccion = "http://34.95.241.213/api/";
+        private readonly string direccion = BioService.Properties.Settings.Default.ConectionURL;
         List<Dispositivo> listaDispositivos = new List<Dispositivo>();
         List<Usuario> listaUsuarios = new List<Usuario>();
         List<Usuario> listaUsuariosStaff = new List<Usuario>();

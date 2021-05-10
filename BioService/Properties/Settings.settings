@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="ConectionURL" Type="System.String" Scope="User">
-      <Value Profile="(Default)">http://34.95.241.213/api/</Value>
+      <Value Profile="(Default)">http://194.62.96.218/api/</Value>
     </Setting>
   </Settings>
 </SettingsFile>
