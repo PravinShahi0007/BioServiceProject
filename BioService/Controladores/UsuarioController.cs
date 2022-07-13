@@ -12,20 +12,24 @@ namespace BioService.Controladores
 {
     public static class UsuarioController
     {
-        public static String direccion = Properties.Settings.Default.ConectionURL;
-
-        public static List<Usuario> Lista(string usersDir)
+        public static async Task<List<Usuario>> GetList(int idMachine)
         {
-            var consultaStaff = (HttpWebRequest)WebRequest.Create(direccion + usersDir);
-            consultaStaff.ContentType = "application/json";
-            consultaStaff.Method = "GET";
-            var respuestaHTTP = (HttpWebResponse)consultaStaff.GetResponse();
-            using (var streamReader = new StreamReader(respuestaHTTP.GetResponseStream()))
-            {
-                var json = streamReader.ReadToEnd();
-                var userList = JsonConvert.DeserializeObject<List<Usuario>>(json);
-                return userList;
-            }
+            var lUsuarios = new List<Usuario>();
+
+            var response = await BioServiceFactory.http.GetAsync("staff");
+            response.EnsureSuccessStatusCode();
+            var json = await response.Content.ReadAsStringAsync();
+            var lista = JsonConvert.DeserializeObject<List<Usuario>>(json);
+            lUsuarios.AddRange(lista);
+            lUsuarios.ForEach(x => x.privilegio = Privilegio.SuperAdminstrador);
+
+            response = await BioServiceFactory.http.GetAsync($"dispositivos/id/{idMachine}");
+            response.EnsureSuccessStatusCode();
+            json = await response.Content.ReadAsStringAsync();
+            lista = JsonConvert.DeserializeObject<List<Usuario>>(json);
+            lUsuarios.AddRange(lista);
+
+            return lUsuarios;
         }
     }
 }

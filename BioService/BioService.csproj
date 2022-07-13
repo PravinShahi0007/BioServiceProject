@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BioService</RootNamespace>
     <AssemblyName>BioService</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -51,8 +52,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BioServiceFactory.cs" />
+    <Compile Include="Controladores\AsistenciasController.cs" />
     <Compile Include="Controladores\DispositivoController.cs" />
     <Compile Include="Controladores\UsuarioController.cs" />
+    <Compile Include="Modelos\Asistencia.cs" />
     <Compile Include="Modelos\Dispositivo.cs" />
     <Compile Include="Modelos\Huella.cs" />
     <Compile Include="Modelos\Privilegio.cs" />

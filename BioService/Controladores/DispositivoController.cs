@@ -12,7 +12,6 @@ namespace BioService.Controladores
 {
     public static class DispositivoController
     {
-        public static String direccion = Properties.Settings.Default.ConectionURL;
         public class ListaDispositivos
         {
             public bool success { get; set; }
@@ -20,18 +19,12 @@ namespace BioService.Controladores
             public string message { get; set; }
         }
 
-        public static List<Dispositivo> Lista()
+        public static async Task<List<Dispositivo>> GetList()
         {
-            var httpWebRequestGet = (HttpWebRequest)WebRequest.Create(direccion + "dispositivos");
-            httpWebRequestGet.ContentType = "application/json";
-            httpWebRequestGet.Method = "GET";
-            var httpResponse = (HttpWebResponse)httpWebRequestGet.GetResponse();
-            using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-            {
-                var json = streamReader.ReadToEnd();
-                var dispositivosList = JsonConvert.DeserializeObject<ListaDispositivos>(json);
-                return dispositivosList.data;
-            }
+            var response = await BioServiceFactory.http.GetAsync("dispositivos");
+            response.EnsureSuccessStatusCode();
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<ListaDispositivos>(json).data;
         }
     }
 }

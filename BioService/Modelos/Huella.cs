@@ -11,8 +11,5 @@ namespace BioService.Modelos
         public Int32 id { get; set; }
         public String codigo { get; set; }
         public Int32 user_id { get; set; }
-        public String created_at { get; set; }
-        public String updated_at { get; set; }
-        public Object deleted_at { get; set; }
     }
 }

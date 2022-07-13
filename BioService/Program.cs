@@ -25,7 +25,7 @@ namespace BioService
                 ServiceBase[] ServicesToRun;
                 ServicesToRun = new ServiceBase[]
                 {
-                new ServicioBiometricoGKD()
+                    new ServicioBiometricoGKD()
                 };
                 ServiceBase.Run(ServicesToRun);
             }

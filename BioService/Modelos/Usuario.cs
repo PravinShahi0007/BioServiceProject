@@ -12,5 +12,6 @@ namespace BioService.Modelos
         public Int32 credencial { get; set; }
         public List<Huella> huellas { get; set; }
         public String tag { get; set; }
+        public Privilegio privilegio { get; set; } = Privilegio.Normal;
     }
 }

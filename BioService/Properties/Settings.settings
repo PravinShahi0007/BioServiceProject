@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="ConectionURL" Type="System.String" Scope="User">
-      <Value Profile="(Default)">http://194.62.96.218/api/</Value>
+      <Value Profile="(Default)">http://gkdsoft.com/api/</Value>
     </Setting>
   </Settings>
 </SettingsFile>
