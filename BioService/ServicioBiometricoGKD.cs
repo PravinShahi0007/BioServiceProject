@@ -59,8 +59,8 @@ namespace WindowsBiometricaService
         {
             timerMain = new Timer();
             timerMain.Elapsed += async (e, sender) => await TimerMain_Elapsed();
-            //timerMain.Interval = TimeSpan.FromSeconds(15).TotalMilliseconds;
-            timerMain.Interval = TimeSpan.FromMinutes(15).TotalMilliseconds;
+            timerMain.Interval = TimeSpan.FromSeconds(5).TotalMilliseconds;
+            //timerMain.Interval = TimeSpan.FromMinutes(15).TotalMilliseconds;
         }
 
         private async Task TimerMain_Elapsed()
@@ -88,7 +88,7 @@ namespace WindowsBiometricaService
                         }
                         catch (Exception ex)
                         {
-                            File.AppendAllText(@"C:\logger.log", $"{DateTime.Now} ERROR en Main: No se pudo completar la gestión de asistencias del equipo: {device.name} (ip: {device.ip})\n{ex.Message}\n{ex.InnerException} ");
+                            File.AppendAllText(@"C:\logger.log", $"{DateTime.Now} ERROR en Main: No se pudo completar la gestión de asistencias del equipo: {device.name} (ip: {device.ip} - id: {device.id})\n{ex.Message}\n{ex.InnerException} ");
                             continue;
                         }
 

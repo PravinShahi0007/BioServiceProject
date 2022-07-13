@@ -12,7 +12,7 @@ namespace BioService.Controladores
 {
     public static class UsuarioController
     {
-        public static async Task<List<Usuario>> GetList(int idMachine)
+        public static async Task<List<Usuario>> GetList(int idDevice)
         {
             var lUsuarios = new List<Usuario>();
 
@@ -23,7 +23,7 @@ namespace BioService.Controladores
             lUsuarios.AddRange(lista);
             lUsuarios.ForEach(x => x.privilegio = Privilegio.SuperAdminstrador);
 
-            response = await BioServiceFactory.http.GetAsync($"dispositivos/id/{idMachine}");
+            response = await BioServiceFactory.http.GetAsync($"dispositivos/id/{idDevice}");
             response.EnsureSuccessStatusCode();
             json = await response.Content.ReadAsStringAsync();
             lista = JsonConvert.DeserializeObject<List<Usuario>>(json);

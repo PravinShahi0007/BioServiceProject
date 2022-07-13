@@ -98,7 +98,7 @@ namespace BioService.Modelos
                     {
                         if (iPrivilege == (int)Privilegio.Normal)
                         {
-                            var user = usuarios.FirstOrDefault(x => x.credencial == Int32.Parse(sEnrollNumber));
+                            var user = usuarios.FirstOrDefault(x => $"{x.credencial}" == sEnrollNumber);
                             if (user == null)
                             {
                                 terminalZK.SSR_EnableUser(1, sEnrollNumber, false);
@@ -160,5 +160,20 @@ namespace BioService.Modelos
             }
             return false;
         }
+
+        //public void DeleteUserData(int enrollNumber)
+        //{
+        //    if (conectado)
+        //    {
+        //        string nombre, credencial, huella = String.Empty;
+        //        int priv, longitud = 0;
+        //        bool habilitado;
+        //        if (terminalZK.SSR_GetUserInfo(1, $"{enrollNumber}", out nombre, out credencial, out priv, out habilitado))
+        //        {
+        //            //var s = terminalZK.GetUserTmpStr(1, 1, 0, ref huella, ref longitud);
+        //            //var s = terminalZK.SSR_DelUserTmpExt(1, $"{enrollNumber}", 0);
+        //        }
+        //    }
+        //}
     }
 }
