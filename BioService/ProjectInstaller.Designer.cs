@@ -41,7 +41,7 @@
             // 
             this.serviceInstaller1.DelayedAutoStart = true;
             this.serviceInstaller1.Description = "Servicio del sistema de identificacion biometrico";
-            this.serviceInstaller1.DisplayName = "ServicioBiometrico";
+            this.serviceInstaller1.DisplayName = "BioService";
             this.serviceInstaller1.ServiceName = "BioService";
             this.serviceInstaller1.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
             // 

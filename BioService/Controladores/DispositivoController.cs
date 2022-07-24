@@ -22,9 +22,13 @@ namespace BioService.Controladores
         public static async Task<List<Dispositivo>> GetList()
         {
             var response = await BioServiceFactory.http.GetAsync("dispositivos");
-            response.EnsureSuccessStatusCode();
-            var json = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<ListaDispositivos>(json).data;
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                var obj = JsonConvert.DeserializeObject<ListaDispositivos>(json);
+                return obj.success ? obj.data : new List<Dispositivo>();
+            }
+            return new List<Dispositivo>();
         }
     }
 }

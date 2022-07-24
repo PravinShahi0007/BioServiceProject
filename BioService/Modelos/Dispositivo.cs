@@ -23,6 +23,13 @@ namespace BioService.Modelos
 
         public Boolean Conectar()
         {
+            int errCode = 0;
+            terminalZK.GetConnectStatus(ref errCode);
+            if (errCode == ErrorCode.ConnectSuccess)
+            {
+                terminalZK.Disconnect();
+                //add to logger
+            }
             var port = Int32.Parse(this.puerto);
             this.conectado = terminalZK.Connect_Net(ip, port);
             return this.conectado;
@@ -98,8 +105,7 @@ namespace BioService.Modelos
                     {
                         if (iPrivilege == (int)Privilegio.Normal)
                         {
-                            var user = usuarios.FirstOrDefault(x => $"{x.credencial}" == sEnrollNumber);
-                            if (user == null)
+                            if (!usuarios.Any(x => $"{x.credencial}" == sEnrollNumber))
                             {
                                 terminalZK.SSR_EnableUser(1, sEnrollNumber, false);
                             }
@@ -135,9 +141,10 @@ namespace BioService.Modelos
                             //Segundo grabo las huellas de cada usuario
                             if (user.huellas != null)
                             {
-                                foreach (var h in user.huellas)
+                                for (int i = 0; i < user.huellas.Count; i++)
                                 {
-                                    terminalZK.SetUserTmpExStr(1, user.credencial.ToString(), h.id, 0, h.codigo);
+                                    var h = user.huellas[i];
+                                    terminalZK.SetUserTmpExStr(1, user.credencial.ToString(), i, 1, h.codigo);
                                 }
                             }
                         }
@@ -161,19 +168,62 @@ namespace BioService.Modelos
             return false;
         }
 
-        //public void DeleteUserData(int enrollNumber)
-        //{
-        //    if (conectado)
-        //    {
-        //        string nombre, credencial, huella = String.Empty;
-        //        int priv, longitud = 0;
-        //        bool habilitado;
-        //        if (terminalZK.SSR_GetUserInfo(1, $"{enrollNumber}", out nombre, out credencial, out priv, out habilitado))
-        //        {
-        //            //var s = terminalZK.GetUserTmpStr(1, 1, 0, ref huella, ref longitud);
-        //            //var s = terminalZK.SSR_DelUserTmpExt(1, $"{enrollNumber}", 0);
-        //        }
-        //    }
-        //}
+
+
+
+
+        public Boolean InsertUser(Usuario user)
+        {
+            //if (EnableDispositivo(false))
+            //{
+            //    try
+            //    {
+            //        //Comienzo el grabado de datos
+            //        bool batchUpdate = terminalZK.BeginBatchUpdate(1, 1);
+            //        if (!string.IsNullOrEmpty(user.tag))
+            //            terminalZK.SetStrCardNumber(user.tag);
+
+            //        if (terminalZK.SSR_SetUserInfo(1, $"{user.credencial}", user.nombre, string.Empty, (int)user.privilegio, true))
+            //        {
+            //            //Segundo grabo las huellas de cada usuario
+            //            if (user.huellas != null)
+            //            {
+            //                foreach (var h in user.huellas)
+            //                {
+            //                    terminalZK.SetUserTmpExStr(1, user.credencial.ToString(), h.id, 0, h.codigo);
+            //                }
+            //            }
+            //        }
+            //        //Envio los datos
+            //        if (batchUpdate)
+            //        {
+            //            terminalZK.BatchUpdate(1);
+            //        }
+            //        terminalZK.RefreshData(1); //Actualizo el dispositivo para que las huellas queden activas
+
+            //        return EnableDispositivo(true);
+            //    }
+            //    catch (Exception)
+            //    {
+            //        return false;
+            //    }
+            //}
+            return false;
+        }
+
+        public void DeleteUserData(int enrollNumber)
+        {
+            //if (conectado)
+            //{
+            //    string nombre, credencial, huella = String.Empty;
+            //    int priv, longitud = 0;
+            //    bool habilitado;
+            //    if (terminalZK.SSR_GetUserInfo(1, $"{enrollNumber}", out nombre, out credencial, out priv, out habilitado))
+            //    {
+            //        //var s = terminalZK.GetUserTmpStr(1, 1, 0, ref huella, ref longitud);
+            //        //var s = terminalZK.SSR_DelUserTmpExt(1, $"{enrollNumber}", 0);
+            //    }
+            //}
+        }
     }
 }

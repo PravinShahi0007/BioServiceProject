@@ -17,18 +17,36 @@ namespace BioService.Controladores
             var lUsuarios = new List<Usuario>();
 
             var response = await BioServiceFactory.http.GetAsync("staff");
-            response.EnsureSuccessStatusCode();
-            var json = await response.Content.ReadAsStringAsync();
-            var lista = JsonConvert.DeserializeObject<List<Usuario>>(json);
-            lUsuarios.AddRange(lista);
-            lUsuarios.ForEach(x => x.privilegio = Privilegio.SuperAdminstrador);
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonS = await response.Content.ReadAsStringAsync();
+                var listaS = JsonConvert.DeserializeObject<List<Usuario>>(jsonS);
+                lUsuarios.AddRange(listaS);
+                lUsuarios.ForEach(x => x.privilegio = Privilegio.SuperAdminstrador);
+            }
 
             response = await BioServiceFactory.http.GetAsync($"dispositivos/id/{idDevice}");
-            response.EnsureSuccessStatusCode();
-            json = await response.Content.ReadAsStringAsync();
-            lista = JsonConvert.DeserializeObject<List<Usuario>>(json);
-            lUsuarios.AddRange(lista);
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonU = await response.Content.ReadAsStringAsync();
+                var listaU = JsonConvert.DeserializeObject<List<Usuario>>(jsonU);
+                lUsuarios.AddRange(listaU);
+            }
 
+            return lUsuarios;
+        }
+
+        public static async Task<List<Usuario>> GetNewUsers()
+        {
+            var lUsuarios = new List<Usuario>();
+
+            var response = await BioServiceFactory.http.GetAsync("usuariosNuevos");
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                var lista = JsonConvert.DeserializeObject<List<Usuario>>(json);
+                lUsuarios.AddRange(lista);
+            }
             return lUsuarios;
         }
     }

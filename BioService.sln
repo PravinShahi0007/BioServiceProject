@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31205.134
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BioService", "BioService\BioService.csproj", "{34E84D73-CF8B-4676-A22D-CB41E99736AA}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "BioServiceSetup", "BioServiceSetup\BioServiceSetup.vdproj", "{83F9B337-487F-4E6E-AD32-C64DD2BFDB9C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BioServiceCalls", "..\BioServiceComunication\BioServiceCalls\BioServiceCalls.csproj", "{910E37C7-164E-4E89-B9F6-FCB0EEDFFE5E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,13 @@ Global
 		{34E84D73-CF8B-4676-A22D-CB41E99736AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{34E84D73-CF8B-4676-A22D-CB41E99736AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{34E84D73-CF8B-4676-A22D-CB41E99736AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83F9B337-487F-4E6E-AD32-C64DD2BFDB9C}.Debug|Any CPU.ActiveCfg = Debug
+		{83F9B337-487F-4E6E-AD32-C64DD2BFDB9C}.Release|Any CPU.ActiveCfg = Release
+		{83F9B337-487F-4E6E-AD32-C64DD2BFDB9C}.Release|Any CPU.Build.0 = Release
+		{910E37C7-164E-4E89-B9F6-FCB0EEDFFE5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{910E37C7-164E-4E89-B9F6-FCB0EEDFFE5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{910E37C7-164E-4E89-B9F6-FCB0EEDFFE5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{910E37C7-164E-4E89-B9F6-FCB0EEDFFE5E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

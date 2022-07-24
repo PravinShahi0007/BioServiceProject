@@ -58,6 +58,7 @@
     <Compile Include="Controladores\UsuarioController.cs" />
     <Compile Include="Modelos\Asistencia.cs" />
     <Compile Include="Modelos\Dispositivo.cs" />
+    <Compile Include="Modelos\ErrorCode.cs" />
     <Compile Include="Modelos\Huella.cs" />
     <Compile Include="Modelos\Privilegio.cs" />
     <Compile Include="Modelos\Usuario.cs" />
